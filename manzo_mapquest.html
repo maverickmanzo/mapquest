@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RouteMap – MapQuest Explorer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --sand: #f5f0e8;
+      --ink: #1a1a2e;
+      --teal: #2a7f7f;
+      --teal-light: #e0f0f0;
+      --accent: #e05c2a;
+      --muted: #7a7a8c;
+      --white: #ffffff;
+      --border: #ddd8ce;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--sand);
+      min-height: 100vh;
+      color: var(--ink);
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    .logo-icon {
+      width: 48px; height: 48px;
+      background: var(--accent);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.9rem;
+      color: var(--ink);
+      line-height: 1;
+    }
+    header p {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 3px;
+      letter-spacing: 0.5px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: 6px 6px 0 var(--border);
+    }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--teal);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 500px) { .input-row { grid-template-columns: 1fr; } }
+
+    .field label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--ink);
+      background: var(--sand);
+      transition: border-color 0.2s;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: var(--teal);
+      background: var(--white);
+    }
+
+    .connector {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      padding: 0 4px;
+    }
+    .dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 2px solid var(--ink);
+      flex-shrink: 0;
+    }
+    .dot.start { background: var(--teal); }
+    .dot.end { background: var(--accent); }
+    .dash-line { flex: 1; border-top: 2px dashed var(--border); }
+    .connector span { font-size: 0.75rem; color: var(--muted); }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: var(--ink);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 3px 3px 0 var(--teal);
+    }
+    button:hover { background: var(--teal); }
+    button:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--teal); }
+    button:disabled { background: var(--border); color: var(--muted); box-shadow: none; cursor: not-allowed; }
+
+    .error {
+      background: #fff0ec;
+      border: 1px solid #f5c5b0;
+      color: var(--accent);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.83rem;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .stat-box {
+      background: var(--teal-light);
+      border: 1px solid #b2d8d8;
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-box .num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: var(--teal);
+    }
+    .stat-box .lbl {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 2px;
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.83rem;
+      margin-bottom: 22px;
+    }
+    thead th {
+      background: var(--sand);
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 500;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: 1.5px solid var(--border);
+    }
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    .td-key { color: var(--muted); width: 40%; font-size: 0.8rem; }
+    .td-val { color: var(--ink); font-weight: 500; }
+
+    #map-img {
+      width: 100%;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      display: block;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="logo-icon">🧭</div>
+    <div>
+      <h1>RouteMap</h1>
+      <p>Powered by MapQuest Directions API</p>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">📍 Enter Your Route</div>
+    <div class="connector">
+      <div class="dot start"></div>
+      <div class="dash-line"></div>
+      <span>route</span>
+      <div class="dash-line"></div>
+      <div class="dot end"></div>
+    </div>
+    <div class="input-row">
+      <div class="field">
+        <label>Starting Location</label>
+        <input type="text" id="from" placeholder="e.g. Manila, Philippines"/>
+      </div>
+      <div class="field">
+        <label>Destination</label>
+        <input type="text" id="to" placeholder="e.g. Cebu City, Philippines"/>
+      </div>
+    </div>
+    <button id="btn" onclick="getRoute()">🔍 Find Route</button>
+    <div class="error" id="error"></div>
+  </div>
+
+  <div class="card hidden" id="result-card">
+    <div class="stats">
+      <div class="stat-box">
+        <div class="num" id="s-dist">–</div>
+        <div class="lbl">Kilometers</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="s-time">–</div>
+        <div class="lbl">Travel Time</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="s-fuel">–</div>
+        <div class="lbl">Fuel (L)</div>
+      </div>
+    </div>
+
+    <div class="section-label">📤 API Request — Inputs Sent</div>
+    <table>
+      <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+      <tbody id="req-table"></tbody>
+    </table>
+
+    <div class="section-label">📥 API Response — Data Received</div>
+    <table>
+      <thead><tr><th>Field</th><th>Value</th></tr></thead>
+      <tbody id="res-table"></tbody>
+    </table>
+
+    <div class="section-label">🗺 Route Map Preview</div>
+    <img id="map-img" alt="Route map"/>
+  </div>
+
+</div>
+<script>
+  const API_KEY = "Ca04kVNLR7kqwbv8v7qMJMPBVKAcPUey";
+
+  async function getRoute() {
+    const from = document.getElementById("from").value.trim();
+    const to   = document.getElementById("to").value.trim();
+    const err  = document.getElementById("error");
+    const btn  = document.getElementById("btn");
+
+    err.style.display = "none";
+    if (!from || !to) { showErr("Please fill in both locations."); return; }
+
+    btn.disabled = true;
+    btn.textContent = "Loading…";
+
+    fillTable("req-table", [
+      ["Endpoint", "mapquestapi.com/directions/v2/route"],
+      ["from", from],
+      ["to", to],
+      ["unit", "k (kilometers)"],
+      ["routeType", "fastest"],
+      ["API Key", API_KEY.slice(0,6) + "••••••••••••"]
+    ]);
+
+    try {
+      const url = `https://www.mapquestapi.com/directions/v2/route?key=${API_KEY}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&unit=k&routeType=fastest`;
+      const res  = await fetch(url);
+      const data = await res.json();
+
+      if (data.info.statuscode !== 0) {
+        showErr("API Error: " + (data.info.messages[0] || "Unknown error"));
+        return;
+      }
+
+      const r = data.route;
+      const fromFmt = r.locations[0].adminArea5 + ", " + r.locations[0].adminArea1;
+      const toFmt   = r.locations[1].adminArea5 + ", " + r.locations[1].adminArea1;
+
+      document.getElementById("s-dist").textContent = r.distance.toFixed(2);
+      document.getElementById("s-time").textContent = r.formattedTime;
+      document.getElementById("s-fuel").textContent = r.fuelUsed ? r.fuelUsed.toFixed(2) : "N/A";
+
+      fillTable("res-table", [
+        ["Status Code",    data.info.statuscode + " (Success)"],
+        ["Origin",         fromFmt],
+        ["Destination",    toFmt],
+        ["Distance (km)",  r.distance.toFixed(2)],
+        ["Duration (min)", (r.time/60).toFixed(0)],
+        ["Formatted Time", r.formattedTime],
+        ["Fuel Used (L)",  r.fuelUsed ? r.fuelUsed.toFixed(2) : "N/A"],
+        ["Has Toll Road",  r.hasTollRoad ? "Yes" : "No"],
+        ["Has Highway",    r.hasHighway  ? "Yes" : "No"],
+        ["Has Ferry",      r.hasFerry    ? "Yes" : "No"],
+        ["Route Points",   r.shape?.shapePoints?.length ?? "N/A"],
+        ["Session ID",     r.sessionId]
+      ]);
+
+      document.getElementById("map-img").src =
+        `https://www.mapquestapi.com/staticmap/v5/map?key=${API_KEY}&size=680,280&type=map&locations=${encodeURIComponent(from)}|marker-start||${encodeURIComponent(to)}|marker-end`;
+
+      document.getElementById("result-card").classList.remove("hidden");
+
+    } catch(e) {
+      showErr("Network error: " + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "🔍 Find Route";
+    }
+  }
+
+  function fillTable(id, rows) {
+    document.getElementById(id).innerHTML = rows.map(
+      ([k,v]) => `<tr><td class="td-key">${k}</td><td class="td-val">${v}</td></tr>`
+    ).join("");
+  }
+
+  function showErr(msg) {
+    const e = document.getElementById("error");
+    e.textContent = msg;
+    e.style.display = "block";
+    document.getElementById("btn").disabled = false;
+    document.getElementById("btn").textContent = "🔍 Find Route";
+  }
+</script>
+</body>
+</html>
